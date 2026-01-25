@@ -67,8 +67,13 @@ export interface Config {
   };
   blocks: {};
   collections: {
+    tenants: Tenant;
     users: User;
     media: Media;
+    posts: Post;
+    pages: Page;
+    tags: Tag;
+    biographies: Biography;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -76,8 +81,13 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
+    tenants: TenantsSelect<false> | TenantsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    posts: PostsSelect<false> | PostsSelect<true>;
+    pages: PagesSelect<false> | PagesSelect<true>;
+    tags: TagsSelect<false> | TagsSelect<true>;
+    biographies: BiographiesSelect<false> | BiographiesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -118,10 +128,43 @@ export interface UserAuthOperations {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tenants".
+ */
+export interface Tenant {
+  id: number;
+  /**
+   * The display name of the tenant/organization
+   */
+  name: string;
+  /**
+   * URL-friendly identifier (e.g., "acme-corp")
+   */
+  slug: string;
+  /**
+   * Optional description of the tenant/organization
+   */
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
   id: number;
+  /**
+   * User roles determine access levels across the system
+   */
+  roles: ('super-admin' | 'admin' | 'user')[];
+  /**
+   * Tenants this user belongs to
+   */
+  tenants?: (number | Tenant)[] | null;
+  /**
+   * Currently active tenant for this user
+   */
+  selectedTenant?: (number | null) | Tenant;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -146,6 +189,7 @@ export interface User {
  */
 export interface Media {
   id: number;
+  tenant?: (number | null) | Tenant;
   alt: string;
   updatedAt: string;
   createdAt: string;
@@ -156,6 +200,430 @@ export interface Media {
   filesize?: number | null;
   width?: number | null;
   height?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts".
+ */
+export interface Post {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  /**
+   * Make this post visible to the public
+   */
+  isPublished?: boolean | null;
+  /**
+   * When this post should be published
+   */
+  publishedDate?: string | null;
+  /**
+   * The author of this post
+   */
+  author?: (number | null) | User;
+  /**
+   * Tags for categorization
+   */
+  tags?: (number | Tag)[] | null;
+  title: string;
+  /**
+   * URL-friendly identifier (e.g., "my-first-post")
+   */
+  slug: string;
+  postType: 'article' | 'video' | 'audio' | 'document' | 'external';
+  /**
+   * Short summary for previews and SEO
+   */
+  excerpt?: string | null;
+  /**
+   * Main content of the post
+   */
+  content?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  video?: {
+    /**
+     * YouTube, Vimeo, or direct video URL
+     */
+    url?: string | null;
+    /**
+     * Duration (e.g., "10:30")
+     */
+    duration?: string | null;
+    /**
+     * Or upload a video file directly
+     */
+    file?: (number | null) | Media;
+  };
+  audio?: {
+    /**
+     * Spotify, SoundCloud, or direct audio URL
+     */
+    url?: string | null;
+    /**
+     * Duration (e.g., "45:00")
+     */
+    duration?: string | null;
+    /**
+     * Or upload an audio file directly
+     */
+    file?: (number | null) | Media;
+  };
+  document?: {
+    /**
+     * Upload a document (PDF, DOCX, etc.)
+     */
+    file?: (number | null) | Media;
+    /**
+     * Allow users to download this document
+     */
+    downloadable?: boolean | null;
+  };
+  external?: {
+    /**
+     * External URL to link to
+     */
+    url: string;
+    /**
+     * Open link in a new browser tab
+     */
+    openInNewTab?: boolean | null;
+  };
+  /**
+   * Large banner image
+   */
+  banner?: (number | null) | Media;
+  /**
+   * Thumbnail for listings
+   */
+  thumbnail?: (number | null) | Media;
+  /**
+   * Add custom metadata fields to this post
+   */
+  customFields?:
+    | {
+        label: string;
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags".
+ */
+export interface Tag {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  name: string;
+  /**
+   * URL-friendly identifier
+   */
+  slug: string;
+  /**
+   * Optional description for this tag
+   */
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages".
+ */
+export interface Page {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  status?: ('draft' | 'published') | null;
+  publishedDate?: string | null;
+  /**
+   * Parent page for nested navigation
+   */
+  parent?: (number | null) | Page;
+  title: string;
+  /**
+   * URL path for this page (e.g., "about-us")
+   */
+  slug: string;
+  /**
+   * Build your page using content blocks
+   */
+  layout?:
+    | (
+        | {
+            heading: string;
+            subheading?: string | null;
+            backgroundImage?: (number | null) | Media;
+            alignment?: ('left' | 'center' | 'right') | null;
+            buttons?:
+              | {
+                  label: string;
+                  link: string;
+                  variant?: ('primary' | 'secondary' | 'outline') | null;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'hero';
+          }
+        | {
+            content: {
+              root: {
+                type: string;
+                children: {
+                  type: any;
+                  version: number;
+                  [k: string]: unknown;
+                }[];
+                direction: ('ltr' | 'rtl') | null;
+                format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+                indent: number;
+                version: number;
+              };
+              [k: string]: unknown;
+            };
+            width?: ('narrow' | 'normal' | 'wide' | 'full') | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'content';
+          }
+        | {
+            media: number | Media;
+            caption?: string | null;
+            size?: ('small' | 'normal' | 'large' | 'full') | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'media';
+          }
+        | {
+            images: {
+              image: number | Media;
+              caption?: string | null;
+              id?: string | null;
+            }[];
+            layout?: ('grid' | 'masonry' | 'carousel') | null;
+            columns?: ('2' | '3' | '4') | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'gallery';
+          }
+        | {
+            heading: string;
+            description?: string | null;
+            buttons?:
+              | {
+                  label: string;
+                  link: string;
+                  variant?: ('primary' | 'secondary') | null;
+                  id?: string | null;
+                }[]
+              | null;
+            style?: ('default' | 'centered' | 'background') | null;
+            /**
+             * CSS color value (e.g., #f5f5f5, rgb(0,0,0))
+             */
+            backgroundColor?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'cta';
+          }
+        | {
+            embedType: 'video' | 'audio' | 'social' | 'html';
+            /**
+             * Paste the URL of the content to embed
+             */
+            url?: string | null;
+            /**
+             * Custom embed code
+             */
+            html?: string | null;
+            aspectRatio?: ('16:9' | '4:3' | '1:1') | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'embed';
+          }
+        | {
+            layout: '2-equal' | '3-equal' | '4-equal' | '1-2' | '2-1' | '1-3' | '3-1';
+            columns?:
+              | {
+                  content?: {
+                    root: {
+                      type: string;
+                      children: {
+                        type: any;
+                        version: number;
+                        [k: string]: unknown;
+                      }[];
+                      direction: ('ltr' | 'rtl') | null;
+                      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+                      indent: number;
+                      version: number;
+                    };
+                    [k: string]: unknown;
+                  } | null;
+                  image?: (number | null) | Media;
+                  id?: string | null;
+                }[]
+              | null;
+            verticalAlign?: ('top' | 'center' | 'bottom') | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'columns';
+          }
+        | {
+            /**
+             * Optional heading above the accordion
+             */
+            heading?: string | null;
+            items: {
+              title: string;
+              content: {
+                root: {
+                  type: string;
+                  children: {
+                    type: any;
+                    version: number;
+                    [k: string]: unknown;
+                  }[];
+                  direction: ('ltr' | 'rtl') | null;
+                  format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+                  indent: number;
+                  version: number;
+                };
+                [k: string]: unknown;
+              };
+              id?: string | null;
+            }[];
+            /**
+             * Allow multiple items to be open at once
+             */
+            allowMultiple?: boolean | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'accordion';
+          }
+        | {
+            style?: ('line' | 'dashed' | 'dotted' | 'space') | null;
+            spacing?: ('small' | 'medium' | 'large') | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'divider';
+          }
+        | {
+            quote: string;
+            author?: string | null;
+            /**
+             * Author title or role
+             */
+            authorTitle?: string | null;
+            authorImage?: (number | null) | Media;
+            style?: ('default' | 'large' | 'background') | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'quote';
+          }
+      )[]
+    | null;
+  meta?: {
+    /**
+     * Custom title for search engines (defaults to page title)
+     */
+    title?: string | null;
+    /**
+     * Meta description for search engines
+     */
+    description?: string | null;
+    /**
+     * Social sharing image
+     */
+    image?: (number | null) | Media;
+    /**
+     * Prevent search engines from indexing this page
+     */
+    noIndex?: boolean | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "biographies".
+ */
+export interface Biography {
+  id: number;
+  tenant?: (number | null) | Tenant;
+  avatar?: (number | null) | Media;
+  /**
+   * Tags for categorization
+   */
+  tags?: (number | Tag)[] | null;
+  name: string;
+  surname?: string | null;
+  /**
+   * Job title or role
+   */
+  title?: string | null;
+  /**
+   * City, country, or region
+   */
+  location?: string | null;
+  /**
+   * Biography or about text
+   */
+  bio?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Social media links
+   */
+  socials?:
+    | {
+        platform:
+          | 'website'
+          | 'email'
+          | 'linkedin'
+          | 'twitter'
+          | 'facebook'
+          | 'instagram'
+          | 'youtube'
+          | 'tiktok'
+          | 'github'
+          | 'dribbble'
+          | 'behance'
+          | 'other';
+        label?: string | null;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -182,12 +650,32 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
+        relationTo: 'tenants';
+        value: number | Tenant;
+      } | null)
+    | ({
         relationTo: 'users';
         value: number | User;
       } | null)
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'posts';
+        value: number | Post;
+      } | null)
+    | ({
+        relationTo: 'pages';
+        value: number | Page;
+      } | null)
+    | ({
+        relationTo: 'tags';
+        value: number | Tag;
+      } | null)
+    | ({
+        relationTo: 'biographies';
+        value: number | Biography;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -233,9 +721,23 @@ export interface PayloadMigration {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tenants_select".
+ */
+export interface TenantsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  roles?: T;
+  tenants?: T;
+  selectedTenant?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -258,6 +760,7 @@ export interface UsersSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
+  tenant?: T;
   alt?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -268,6 +771,248 @@ export interface MediaSelect<T extends boolean = true> {
   filesize?: T;
   width?: T;
   height?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts_select".
+ */
+export interface PostsSelect<T extends boolean = true> {
+  tenant?: T;
+  isPublished?: T;
+  publishedDate?: T;
+  author?: T;
+  tags?: T;
+  title?: T;
+  slug?: T;
+  postType?: T;
+  excerpt?: T;
+  content?: T;
+  video?:
+    | T
+    | {
+        url?: T;
+        duration?: T;
+        file?: T;
+      };
+  audio?:
+    | T
+    | {
+        url?: T;
+        duration?: T;
+        file?: T;
+      };
+  document?:
+    | T
+    | {
+        file?: T;
+        downloadable?: T;
+      };
+  external?:
+    | T
+    | {
+        url?: T;
+        openInNewTab?: T;
+      };
+  banner?: T;
+  thumbnail?: T;
+  customFields?:
+    | T
+    | {
+        label?: T;
+        value?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages_select".
+ */
+export interface PagesSelect<T extends boolean = true> {
+  tenant?: T;
+  status?: T;
+  publishedDate?: T;
+  parent?: T;
+  title?: T;
+  slug?: T;
+  layout?:
+    | T
+    | {
+        hero?:
+          | T
+          | {
+              heading?: T;
+              subheading?: T;
+              backgroundImage?: T;
+              alignment?: T;
+              buttons?:
+                | T
+                | {
+                    label?: T;
+                    link?: T;
+                    variant?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        content?:
+          | T
+          | {
+              content?: T;
+              width?: T;
+              id?: T;
+              blockName?: T;
+            };
+        media?:
+          | T
+          | {
+              media?: T;
+              caption?: T;
+              size?: T;
+              id?: T;
+              blockName?: T;
+            };
+        gallery?:
+          | T
+          | {
+              images?:
+                | T
+                | {
+                    image?: T;
+                    caption?: T;
+                    id?: T;
+                  };
+              layout?: T;
+              columns?: T;
+              id?: T;
+              blockName?: T;
+            };
+        cta?:
+          | T
+          | {
+              heading?: T;
+              description?: T;
+              buttons?:
+                | T
+                | {
+                    label?: T;
+                    link?: T;
+                    variant?: T;
+                    id?: T;
+                  };
+              style?: T;
+              backgroundColor?: T;
+              id?: T;
+              blockName?: T;
+            };
+        embed?:
+          | T
+          | {
+              embedType?: T;
+              url?: T;
+              html?: T;
+              aspectRatio?: T;
+              id?: T;
+              blockName?: T;
+            };
+        columns?:
+          | T
+          | {
+              layout?: T;
+              columns?:
+                | T
+                | {
+                    content?: T;
+                    image?: T;
+                    id?: T;
+                  };
+              verticalAlign?: T;
+              id?: T;
+              blockName?: T;
+            };
+        accordion?:
+          | T
+          | {
+              heading?: T;
+              items?:
+                | T
+                | {
+                    title?: T;
+                    content?: T;
+                    id?: T;
+                  };
+              allowMultiple?: T;
+              id?: T;
+              blockName?: T;
+            };
+        divider?:
+          | T
+          | {
+              style?: T;
+              spacing?: T;
+              id?: T;
+              blockName?: T;
+            };
+        quote?:
+          | T
+          | {
+              quote?: T;
+              author?: T;
+              authorTitle?: T;
+              authorImage?: T;
+              style?: T;
+              id?: T;
+              blockName?: T;
+            };
+      };
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+        noIndex?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags_select".
+ */
+export interface TagsSelect<T extends boolean = true> {
+  tenant?: T;
+  name?: T;
+  slug?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "biographies_select".
+ */
+export interface BiographiesSelect<T extends boolean = true> {
+  tenant?: T;
+  avatar?: T;
+  tags?: T;
+  name?: T;
+  surname?: T;
+  title?: T;
+  location?: T;
+  bio?: T;
+  socials?:
+    | T
+    | {
+        platform?: T;
+        label?: T;
+        url?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

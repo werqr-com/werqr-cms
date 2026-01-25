@@ -1,0 +1,44 @@
+.tenant-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  margin-right: 8px;
+}
+
+.tenant-selector__label {
+  font-size: 13px;
+  color: var(--theme-elevation-800);
+  white-space: nowrap;
+}
+
+.tenant-selector__select {
+  background-color: var(--theme-elevation-100);
+  border: 1px solid var(--theme-elevation-300);
+  border-radius: 4px;
+  color: var(--theme-elevation-800);
+  font-size: 13px;
+  padding: 6px 10px;
+  cursor: pointer;
+  min-width: 140px;
+  transition: border-color 0.15s ease;
+}
+
+.tenant-selector__select:hover {
+  border-color: var(--theme-elevation-400);
+}
+
+.tenant-selector__select:focus {
+  outline: none;
+  border-color: var(--theme-elevation-500);
+}
+
+.tenant-selector__select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.tenant-selector__loading {
+  font-size: 13px;
+  color: var(--theme-elevation-600);
+}
